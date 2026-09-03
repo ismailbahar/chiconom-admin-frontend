@@ -53,6 +53,7 @@ const BOS_FORM: Record<string, unknown> = {
   tax_rate: 20, stock: 0, low_stock_threshold: 5, track_stock: true, allow_backorder: false,
   max_per_order: '', weight: '', length: '', width: '', height: '', free_shipping: true, prep_days: 1,
   cover_image: '', status: 'draft', is_featured: false, is_new: true, meta_title: '', meta_description: '',
+  trendyol_url: '', trendyol_price: '',
 };
 
 /**
@@ -117,6 +118,7 @@ export default function AdminProductDetail() {
       cover_image: data.cover_image ?? '', status: data.status ?? 'draft',
       is_featured: Boolean(data.is_featured), is_new: Boolean(data.is_new),
       meta_title: data.meta_title ?? '', meta_description: data.meta_description ?? '',
+      trendyol_url: data.trendyol_url ?? '', trendyol_price: data.trendyol_price ?? '',
     });
 
     setImages((data.images ?? []).map((i: { path: string }) => i.path));
@@ -315,6 +317,31 @@ export default function AdminProductDetail() {
 
               <Field label="Alış maliyeti (TL)" hint="Yalnız raporlarda kullanılır, vitrinde görünmez.">
                 <Input type="number" step="0.01" value={String(form.cost_price ?? '')} onChange={(e) => set('cost_price', e.target.value)} />
+              </Field>
+
+              {/* Trendyol: bağlantı girilirse ürün sayfasında "Trendyol'dan satın al" düğmesi çıkar */}
+              <Field
+                label="Trendyol bağlantısı (isteğe bağlı)"
+                hint="Girilirse ürün sayfasında 'Bu ürünü Trendyol'dan satın al' düğmesi görünür; yeni sekmede açılır."
+                className="md:col-span-2"
+              >
+                <Input
+                  type="url"
+                  placeholder="https://www.trendyol.com/chiconom/..."
+                  value={String(form.trendyol_url ?? '')}
+                  onChange={(e) => set('trendyol_url', e.target.value)}
+                  className="font-mono text-sm"
+                />
+              </Field>
+
+              <Field label="Trendyol fiyatı (TL, isteğe bağlı)" hint="Boş bırakılırsa düğmede fiyat gösterilmez.">
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={String(form.trendyol_price ?? '')}
+                  onChange={(e) => set('trendyol_price', e.target.value)}
+                  disabled={!String(form.trendyol_url ?? '').trim()}
+                />
               </Field>
 
               <Field label="KDV oranı (%)">
