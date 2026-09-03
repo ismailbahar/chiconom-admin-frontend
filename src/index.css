@@ -1,0 +1,285 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Nötr yüzeyler — soğuk griler (mor markayla uyumlu) */
+    --background: 0 0% 100%;
+    --foreground:260 10% 10%;
+    --card: 0 0% 100%;
+    --card-foreground:260 10% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground:260 10% 10%;
+
+    /* Chiconom moru — ana marka rengi */
+    --primary:262 83% 58%;          /* #7C3AED */
+    --primary-foreground: 0 0% 100%;
+    --brand:262 83% 58%;
+    --brand-foreground: 0 0% 100%;
+    --brand-soft:262 80% 96%;       /* açık mor zemin */
+    --brand-dark:263 70% 46%;       /* #6D28D9 — degrade ucu */
+    --brand-accent:330 81% 60%;     /* pembe vurgu (indirim rozeti) */
+    --brand-accent-foreground: 0 0% 100%;
+
+    --secondary:260 15% 96%;
+    --secondary-foreground:260 10% 20%;
+    --muted:260 12% 96%;
+    --muted-foreground:260 6% 45%;
+    --accent:262 80% 96%;
+    --accent-foreground:263 70% 40%;
+
+    --destructive: 0 84% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 142 71% 40%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 95% 50%;
+    --warning-foreground: 24 20% 12%;
+
+    --border:260 12% 90%;
+    --input:260 12% 88%;
+    --ring:262 83% 58%;
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 24 12% 8%;
+    --foreground: 30 10% 96%;
+    --card: 24 12% 11%;
+    --card-foreground: 30 10% 96%;
+    --popover: 24 12% 11%;
+    --popover-foreground: 30 10% 96%;
+
+    --primary:262 83% 66%;
+    --primary-foreground: 0 0% 100%;
+    --brand:262 83% 66%;
+    --brand-foreground: 0 0% 100%;
+    --brand-soft:262 30% 18%;
+    --brand-dark:263 70% 52%;
+    --brand-accent:330 81% 64%;
+    --brand-accent-foreground: 0 0% 100%;
+
+    --secondary: 24 8% 17%;
+    --secondary-foreground: 30 10% 92%;
+    --muted: 24 8% 17%;
+    --muted-foreground: 28 6% 62%;
+    --accent:262 25% 18%;
+    --accent-foreground:262 90% 78%;
+
+    --destructive: 0 72% 52%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 142 60% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 90% 55%;
+    --warning-foreground: 24 20% 12%;
+
+    --border: 24 8% 22%;
+    --input: 24 8% 24%;
+    --ring:262 83% 66%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: 'cv11', 'ss01';
+  }
+
+  /* Türkçe metinlerde tireleme */
+  p, li {
+    hyphens: auto;
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* İnce, marka renkli scrollbar (panel tabloları) */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 8px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Çok satırlı kırpma (ürün başlıkları) */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Fırsat kartı hover yükselmesi */
+  .card-lift {
+    @apply transition-all duration-200;
+  }
+  .card-lift:hover {
+    @apply -translate-y-1 shadow-lg shadow-brand/10;
+  }
+}
+
+/* Tiptap editör içeriği */
+.tiptap-content {
+  @apply text-sm leading-relaxed;
+}
+.tiptap-content:focus {
+  outline: none;
+}
+.tiptap-content h2 {
+  @apply text-lg font-bold mt-4 mb-2;
+}
+.tiptap-content h3 {
+  @apply text-base font-semibold mt-3 mb-1.5;
+}
+.tiptap-content ul {
+  @apply list-disc pl-5 space-y-1 my-2;
+}
+.tiptap-content ol {
+  @apply list-decimal pl-5 space-y-1 my-2;
+}
+.tiptap-content a {
+  @apply text-primary underline;
+}
+.tiptap-content p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  @apply text-muted-foreground float-left h-0 pointer-events-none;
+}
+
+/* CMS'ten gelen zengin metin (statik sayfalar, ürün açıklaması) */
+.rich-text {
+  @apply text-sm leading-relaxed text-muted-foreground space-y-3;
+}
+.rich-text h2 {
+  @apply text-xl font-bold text-foreground mt-6 mb-2;
+}
+.rich-text h3 {
+  @apply text-lg font-semibold text-foreground mt-4 mb-1.5;
+}
+.rich-text ul {
+  @apply list-disc pl-5 space-y-1;
+}
+.rich-text ol {
+  @apply list-decimal pl-5 space-y-1;
+}
+.rich-text a {
+  @apply text-primary underline underline-offset-2;
+}
+.rich-text table {
+  @apply w-full text-sm border-collapse;
+}
+.rich-text td,
+.rich-text th {
+  @apply border border-border px-3 py-2;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   SÖZLEŞME VE BLOG GÖVDESİ
+
+   İçerik sunucudan HTML olarak gelir (yönetici panelinden düzenlenen
+   güvenilir kaynak). Tailwind'in reset'i başlık/liste stillerini
+   sıfırladığı için okunabilirlik burada geri kazandırılır: uzun hukuki
+   metinlerde satır aralığı ve madde girintisi kavranabilirliği belirler.
+   ───────────────────────────────────────────────────────────────────── */
+.sozlesme-govde,
+.blog-govde {
+  @apply text-[15px] leading-relaxed text-foreground;
+}
+
+.sozlesme-govde h2,
+.blog-govde h2 {
+  @apply mb-2 mt-7 border-b border-border pb-1.5 text-base font-black uppercase tracking-wide;
+}
+
+.blog-govde h2 {
+  @apply border-0 text-xl normal-case tracking-tight;
+}
+
+.sozlesme-govde h3,
+.blog-govde h3 {
+  @apply mb-1.5 mt-5 font-bold;
+}
+
+.sozlesme-govde p,
+.blog-govde p {
+  @apply mb-3;
+}
+
+.sozlesme-govde ol,
+.blog-govde ol {
+  @apply mb-3 list-decimal space-y-1.5 pl-6;
+}
+
+.sozlesme-govde ul,
+.blog-govde ul {
+  @apply mb-3 list-disc space-y-1.5 pl-6;
+}
+
+.sozlesme-govde a,
+.blog-govde a {
+  @apply text-brand underline underline-offset-2;
+}
+
+.blog-govde img {
+  @apply my-4 rounded-xl border border-border;
+}
+
+.blog-govde blockquote {
+  @apply my-4 border-l-4 border-brand bg-muted/40 px-4 py-2 italic;
+}
+
+/* Sözleşmelerdeki künye tabloları */
+.sozlesme-govde table,
+.sozlesme-tablo {
+  @apply my-3 w-full border-collapse text-sm;
+}
+
+.sozlesme-govde td,
+.sozlesme-govde th {
+  @apply border border-border px-3 py-2 align-top;
+}
+
+.sozlesme-govde th {
+  @apply bg-muted/50 text-left font-semibold;
+}
+
+/* İlk sütun etiket gibi davransın (Ünvan / Adres / Telefon…) */
+.sozlesme-govde td:first-child {
+  @apply w-2/5 bg-muted/30 font-medium;
+}
+
+/*
+  Sipariş anında doldurulacak alanlar. Ham "{satici_unvan}" yerine
+  "[Satıcı Ünvanı]" gösterilir; müşteri eksik sözleşme değil, sipariş
+  anında dolacak alan olduğunu anlar.
+*/
+.sozlesme-yer-tutucu {
+  @apply rounded bg-warning/15 px-1 py-0.5 not-italic text-[13px] text-muted-foreground;
+}

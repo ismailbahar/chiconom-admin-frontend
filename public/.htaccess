@@ -1,0 +1,44 @@
+# ─────────────────────────────────────────────────────────────────────────
+# TEK SAYFA UYGULAMASI YÖNLENDİRMESİ
+#
+# React Router adresleri TARAYICIDA çözer. Kullanıcı /odeme adresini
+# doğrudan yazdığında ya da sayfayı yenilediğinde istek sunucuya gider ve
+# Apache "/odeme" diye bir dosya arar — bulamayınca 404 verir.
+#
+# Bu kural şunu söyler: istenen şey gerçek bir DOSYA ya da KLASÖR değilse
+# index.html'i döndür; gerisini uygulama halleder. Uygulamada da olmayan bir
+# adres ise kendi 404 sayfasını gösterir (App.tsx içindeki path="*").
+#
+# NEDEN public/ İÇİNDE: Vite bu klasörü olduğu gibi dist/ içine kopyalar.
+# Doğrudan dist/ içine konsaydı her `npm run build` onu silerdi ve ilk
+# dağıtımda derin bağlantılar yeniden kırılırdı.
+#
+# Bu dosya olmadan ödeme dönüşü (/odeme-sonuc) de 404 verir — 3D Secure'dan
+# dönen müşteri parasını ödemiş olmasına rağmen hata sayfası görürdü.
+# ─────────────────────────────────────────────────────────────────────────
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # Var olan dosya ve klasörler olduğu gibi servis edilir
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Gerisi uygulamaya
+    RewriteRule ^ index.html [L]
+</IfModule>
+
+# Derleme çıktısı içerik değişince yeni ad alır (index-a1b2c3.js), bu yüzden
+# uzun süre önbelleklenebilir. index.html ise ASLA önbelleklenmemeli: yeni
+# sürüm yayınlandığında tarayıcı eski dosya adlarını isteyip beyaz ekran verir.
+<IfModule mod_headers.c>
+    <FilesMatch "\.(js|css|woff2|png|jpg|jpeg|webp|avif|svg|ico)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+
+    <FilesMatch "\.(html)$">
+        Header set Cache-Control "no-cache, must-revalidate"
+    </FilesMatch>
+</IfModule>

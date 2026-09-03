@@ -1,0 +1,30 @@
+# Satır sonlarını depoda LF olarak normalleştir.
+#
+# Proje Windows'ta geliştirildi ama sunucuda Linux'ta çalışacak. Normalleştirme
+# olmadan aynı dosya iki farklı satır sonuyla kaydedilebiliyor ve diff'ler
+# "tüm dosya değişti" gibi görünüyor.
+* text=auto eol=lf
+
+# Windows başlatıcıları CRLF olmak ZORUNDA — cmd.exe LF'li .bat dosyasında
+# satırları yanlış yorumlayabiliyor.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# İkili dosyalar dönüştürülmez
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.webp binary
+*.avif binary
+*.ico  binary
+*.pdf  binary
+*.xlsx binary
+*.woff  binary
+*.woff2 binary
+*.ttf  binary
+*.otf  binary
+
+# Kilit dosyaları diff'te gürültü yapmasın
+composer.lock     -diff
+package-lock.json -diff
