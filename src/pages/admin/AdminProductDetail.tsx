@@ -40,6 +40,12 @@ interface FormOptions {
 /** Formda tutulan alanlar — sunucuya olduğu gibi gönderilir. */
 type Form = Record<string, unknown>;
 
+/** Galeri öğesi: variant_id null = ortak (her renkte), dolu = yalnız o renk. */
+interface GalleryImage {
+  path: string;
+  variant_id: number | null;
+}
+
 const STATUS_OPTIONS = [
   { value: 'active', label: 'Yayında' },
   { value: 'draft', label: 'Taslak' },
@@ -73,10 +79,13 @@ export default function AdminProductDetail() {
   const fileInput = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState<Form>({});
-  const [images, setImages] = useState<string[]>([]);
+  /** Galeri: variant_id null = ortak görsel, dolu = yalnız o renge ait */
+  const [images, setImages] = useState<GalleryImage[]>([]);
   const [variants, setVariants] = useState<Variant[]>([]);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  /** Yeni yüklenen görsellerin bağlanacağı renk (null = ortak) */
+  const [uploadVariant, setUploadVariant] = useState<number | null>(null);
   const [dirty, setDirty] = useState(false);
 
   const { data, isLoading, refetch } = useQuery({
@@ -121,7 +130,10 @@ export default function AdminProductDetail() {
       trendyol_url: data.trendyol_url ?? '', trendyol_price: data.trendyol_price ?? '',
     });
 
-    setImages((data.images ?? []).map((i: { path: string }) => i.path));
+    setImages((data.images ?? []).map((i: { path: string; product_variant_id?: number | null }) => ({
+      path: i.path,
+      variant_id: i.product_variant_id ?? null,
+    })));
     setVariants(data.variants ?? []);
     setDirty(false);
 
@@ -174,7 +186,7 @@ export default function AdminProductDetail() {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
-      const yeni = (res.uploaded ?? []).map((u: { path: string }) => u.path);
+      const yeni: GalleryImage[] = (res.uploaded ?? []).map((u: { path: string }) => ({ path: u.path, variant_id: uploadVariant }));
       setImages((g) => [...g, ...yeni]);
       setDirty(true);
 
@@ -403,8 +415,21 @@ export default function AdminProductDetail() {
                 ref={fileInput} type="file" accept="image/*" multiple hidden
                 onChange={(e) => e.target.files && gorselYukle(e.target.files)}
               />
+              {/* Yüklenen görseller hangi renge ait olacak? Boş = ortak */}
+              {variants.length > 0 && (
+                <select
+                  value={uploadVariant ?? ''}
+                  onChange={(e) => setUploadVariant(e.target.value ? Number(e.target.value) : null)}
+                  className="h-9 rounded-lg border border-input bg-background px-2 text-xs focus:outline-none focus:ring-2 focus:ring-ring"
+                  title="Yüklenecek görseller hangi renge ait?"
+                >
+                  <option value="">Yüklenenler: Ortak (tüm renkler)</option>
+                  {variants.map((v) => <option key={v.id} value={v.id}>Yüklenenler: {v.name}</option>)}
+                </select>
+              )}
               <p className="text-xs text-muted-foreground">
-                Yüklenen görseller otomatik WebP'ye çevrilir. Yıldıza tıklayarak kapak seçin.
+                Görseller otomatik WebP'ye çevrilir. Yıldız = kapak. Her görselin altından hangi renge ait olduğunu seçin;
+                "Ortak" görseller her renkte görünür, renge ait görseller o renk seçilince öne gelir.
               </p>
             </div>
 
@@ -415,42 +440,64 @@ export default function AdminProductDetail() {
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
-                {images.map((path, i) => {
-                  const kapak = form.cover_image === path;
+                {images.map((img, i) => {
+                  const kapak = form.cover_image === img.path;
+                  const renk = variants.find((v) => v.id === img.variant_id);
 
                   return (
-                    <div key={path + i} className={cn(
-                      'group relative aspect-square overflow-hidden rounded-xl border bg-muted',
-                      kapak ? 'border-brand ring-2 ring-brand/30' : 'border-border',
-                    )}>
-                      <SmartImage src={path} alt="" imgClassName="object-contain" />
+                    <div key={img.path + i} className="space-y-1">
+                      <div className={cn(
+                        'group relative aspect-square overflow-hidden rounded-xl border bg-muted',
+                        kapak ? 'border-brand ring-2 ring-brand/30' : 'border-border',
+                      )}>
+                        <SmartImage src={img.path} alt="" imgClassName="object-contain" />
 
-                      <div className="absolute inset-x-0 bottom-0 flex justify-between gap-1 bg-background/85 p-1 opacity-0 transition-opacity group-hover:opacity-100">
-                        <button
-                          title={kapak ? 'Kapak görseli' : 'Kapak yap'}
-                          onClick={() => set('cover_image', path)}
-                          className={cn('rounded p-1', kapak ? 'text-brand' : 'text-muted-foreground hover:text-brand')}
-                        >
-                          <Star className={cn('size-3.5', kapak && 'fill-brand')} />
-                        </button>
+                        <div className="absolute inset-x-0 bottom-0 flex justify-between gap-1 bg-background/85 p-1 opacity-0 transition-opacity group-hover:opacity-100">
+                          <button
+                            title={kapak ? 'Kapak görseli' : 'Kapak yap'}
+                            onClick={() => set('cover_image', img.path)}
+                            className={cn('rounded p-1', kapak ? 'text-brand' : 'text-muted-foreground hover:text-brand')}
+                          >
+                            <Star className={cn('size-3.5', kapak && 'fill-brand')} />
+                          </button>
 
-                        <span className="text-[10px] text-muted-foreground">{i + 1}</span>
+                          <span className="text-[10px] text-muted-foreground">{i + 1}</span>
 
-                        <button
-                          title="Galeriden çıkar"
-                          onClick={() => {
-                            setImages((g) => g.filter((_, idx) => idx !== i));
-                            if (kapak) set('cover_image', '');
-                            setDirty(true);
-                          }}
-                          className="rounded p-1 text-muted-foreground hover:text-destructive"
-                        >
-                          <X className="size-3.5" />
-                        </button>
+                          <button
+                            title="Galeriden çıkar"
+                            onClick={() => {
+                              setImages((g) => g.filter((_, idx) => idx !== i));
+                              if (kapak) set('cover_image', '');
+                              setDirty(true);
+                            }}
+                            className="rounded p-1 text-muted-foreground hover:text-destructive"
+                          >
+                            <X className="size-3.5" />
+                          </button>
+                        </div>
+
+                        {kapak && (
+                          <Badge variant="deal" className="absolute left-1 top-1 text-[9px]">KAPAK</Badge>
+                        )}
+                        {renk && (
+                          <Badge variant="soft" className="absolute right-1 top-1 max-w-[80%] truncate text-[9px]">{renk.name}</Badge>
+                        )}
                       </div>
 
-                      {kapak && (
-                        <Badge variant="deal" className="absolute left-1 top-1 text-[9px]">KAPAK</Badge>
+                      {/* Görsel → renk ataması */}
+                      {variants.length > 0 && (
+                        <select
+                          value={img.variant_id ?? ''}
+                          onChange={(e) => {
+                            const vid = e.target.value ? Number(e.target.value) : null;
+                            setImages((g) => g.map((x, idx) => (idx === i ? { ...x, variant_id: vid } : x)));
+                            setDirty(true);
+                          }}
+                          className="h-7 w-full rounded-md border border-input bg-background px-1 text-[11px] focus:outline-none focus:ring-2 focus:ring-ring"
+                        >
+                          <option value="">Ortak (tüm renkler)</option>
+                          {variants.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
+                        </select>
                       )}
                     </div>
                   );
@@ -461,6 +508,7 @@ export default function AdminProductDetail() {
             <p className="mt-3 text-xs text-muted-foreground">
               Galeriden çıkarılan görsel diskten silinmez, yalnız üründen kopar —
               başka üründe de kullanılıyor olabilir. Kalıcı silme Medya Merkezi'nden yapılır.
+              Renge ait ilk görsel, o rengin renk kutusundaki küçük görseli olarak da kullanılır.
             </p>
           </Card>
         </TabsContent>

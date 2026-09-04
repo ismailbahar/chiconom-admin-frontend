@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
 import {
   Banknote, Check, Loader2, PackageCheck, RotateCcw, Truck, X,
@@ -29,11 +30,22 @@ interface Row {
   refund_amount: number;
   refund_completed: boolean;
   return_tracking_number: string | null;
+  return_shipping_code: string | null;
+  return_method: 'yurtici' | 'manual' | null;
+  return_carrier: string | null;
+  return_deadline_at: string | null;
   items_count: number;
   status: string;
   status_label: string;
   created_at: string | null;
   [key: string]: unknown;
+}
+
+interface ShippingInfo {
+  method: 'yurtici' | 'manual';
+  carrier: string | null;
+  address: string | null;
+  deadline_days: number;
 }
 
 /**
@@ -66,6 +78,14 @@ export default function AdminReturns() {
   const [rejectRow, setRejectRow] = useState<Row | null>(null);
   const [refundRow, setRefundRow] = useState<Row | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
+
+  // Onay diyaloğunda "iade kodu nasıl üretilecek" bilgisini gösterir
+  const { data: shippingInfo } = useQuery<{ data: ShippingInfo }>({
+    queryKey: ['returns-shipping-info'],
+    queryFn: async () => (await adminApi.get('/returns/shipping-info')).data,
+    staleTime: 5 * 60_000,
+  });
+  const si = shippingInfo?.data;
 
   const columns = useMemo<ColumnDef<Row, unknown>[]>(() => [
     {
@@ -127,6 +147,15 @@ export default function AdminReturns() {
       cell: ({ row }) => (
         <div>
           <StatusBadge status={row.original.status} label={row.original.status_label} />
+
+          {/* Onayda müşteriye verilen iade kargo kodu */}
+          {row.original.return_shipping_code && (
+            <p className="mt-1 text-[11px] text-muted-foreground" title={row.original.return_method === 'yurtici' ? 'Yurtiçi gönderici ödemeli iade siparişi' : 'Mağaza iade kodu (alıcı ödemeli)'}>
+              Kod: <span className="font-mono font-bold text-brand">{row.original.return_shipping_code}</span>
+              {row.original.return_carrier ? ` · ${row.original.return_carrier}` : ''}
+              {row.original.return_deadline_at ? ` · son ${formatDateTime(row.original.return_deadline_at).slice(0, 10)}` : ''}
+            </p>
+          )}
 
           {/* Kargo takip numarasını müşteri girer — ispat aracıdır */}
           {row.original.return_tracking_number && (
@@ -261,7 +290,9 @@ export default function AdminReturns() {
         open={Boolean(approveRow)}
         onOpenChange={(open) => { if (!open) setApproveRow(null); }}
         title="İade talebini onayla"
-        description="Müşteriye ürünü nasıl göndereceği e-posta ile iletilir. Ürün elinize ulaştığında “Teslim Alındı” ile stoğa işleyip para iadesini yapabilirsiniz."
+        description={si?.method === 'yurtici'
+          ? `Yurtiçi Kargo'dan gönderici ödemeli iade siparişi açılır; müşteriye iade kodu e-posta ve SMS ile gider, kodu şubede söyleyip ücret ödemeden gönderir (${si.deadline_days} gün içinde). Ürün gelince "Teslim Alındı" ile stoğa işleyip para iadesini yaparsınız.`
+          : `Müşteriye iade kodu (${approveRow?.code ?? 'talep no'}), ${si?.carrier ?? 'kargo'} ile "alıcı ödemeli" gönderim talimatı ve iade adresi (${si?.address ?? 'Ayarlar → Sipariş'}) e-posta/SMS ile gider; ${si?.deadline_days ?? 7} gün içinde kargoya vermesi beklenir. Yurtiçi entegrasyonu açılırsa kod otomatik Yurtiçi'nden alınır.`}
         confirmLabel="Onayla"
         optionalReason
         reasonLabel="Karar notu"
