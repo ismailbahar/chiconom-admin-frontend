@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   ArrowLeft, ArrowRight, Banknote, Check, CreditCard, Download, ExternalLink, FileText, Gift, Loader2,
-  MapPin, Package, Receipt, RotateCcw, Search, Send, StickyNote, Truck, User, XCircle,
+  Mail, MapPin, Package, Receipt, RotateCcw, Search, Send, StickyNote, Truck, User, XCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import PageHeader from '@/components/panel/PageHeader';
@@ -11,6 +11,7 @@ import StatusBadge, { ORDER_FLOW, ORDER_STATUS_LABELS } from '@/components/panel
 import ConfirmDialog from '@/components/panel/ConfirmDialog';
 import ShipmentDialog from '@/components/panel/ShipmentDialog';
 import InvoiceUploadDialog from '@/components/panel/InvoiceUploadDialog';
+import CustomerMailDialog from '@/components/panel/CustomerMailDialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -206,6 +207,7 @@ export default function AdminOrderDetail() {
   const [cancelOpen, setCancelOpen] = useState(false);
   const [shipOpen, setShipOpen] = useState(false);
   const [invoiceOpen, setInvoiceOpen] = useState(false);
+  const [mailOpen, setMailOpen] = useState(false);
   const [invoiceDeleteOpen, setInvoiceDeleteOpen] = useState(false);
   const [refundOpen, setRefundOpen] = useState(false);
   const [refundAmount, setRefundAmount] = useState('');
@@ -843,6 +845,11 @@ export default function AdminOrderDetail() {
             {Boolean(o.gift_note) && (
               <p className="mt-2 rounded-lg bg-brand-soft p-2 text-xs"><strong>Hediye notu:</strong> {String(o.gift_note)}</p>
             )}
+            {can('orders.manage') && Boolean(o.email) && (
+              <Button variant="outline" size="sm" className="mt-3 w-full" onClick={() => setMailOpen(true)}>
+                <Mail className="size-4 text-brand" /> Müşteriye E-posta Gönder
+              </Button>
+            )}
           </div>
 
           <AddressCard title="Teslimat Adresi" icon={MapPin} address={o.shipping_address} />
@@ -872,6 +879,13 @@ export default function AdminOrderDetail() {
         onDone={() => { setShipOpen(false); refetch(); }}
       />
 
+      <CustomerMailDialog
+        open={mailOpen}
+        onOpenChange={setMailOpen}
+        target={{ kind: 'order', orderNumber }}
+        email={String(o.email ?? '')}
+        name={data.customer ? ` ` : String(o.customer_name ?? '')}
+      />
       <InvoiceUploadDialog
         open={invoiceOpen}
         onOpenChange={setInvoiceOpen}

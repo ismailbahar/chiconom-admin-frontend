@@ -1,9 +1,12 @@
 import { useMemo, useState } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
-import { Users } from 'lucide-react';
+import { Mail, Users } from 'lucide-react';
 import PageHeader from '@/components/panel/PageHeader';
 import ServerTable from '@/components/panel/ServerTable';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import CustomerMailDialog from '@/components/panel/CustomerMailDialog';
+import { usePanelAuthStore } from '@/stores/panelAuthStore';
 import { Input } from '@/components/ui/input';
 import { useServerTable } from '@/hooks/useServerTable';
 import { adminApi } from '@/lib/api';
@@ -29,6 +32,8 @@ interface Row {
  */
 export default function AdminCustomers() {
   const [search, setSearch] = useState('');
+  const [mailRow, setMailRow] = useState<Row | null>(null);
+  const can = usePanelAuthStore((s) => s.can);
 
   const columns = useMemo<ColumnDef<Row, unknown>[]>(() => [
     {
@@ -103,7 +108,20 @@ export default function AdminCustomers() {
       ),
       meta: { exportHeader: 'Kayıt', exportFormat: 'datetime', disableFilter: true },
     },
-  ], []);
+    {
+      id: 'actions',
+      header: '',
+      enableSorting: false,
+      cell: ({ row }) => can('customers.manage') && row.original.email ? (
+        <div className="flex justify-end">
+          <Button variant="ghost" size="sm" onClick={() => setMailRow(row.original)} title="Müşteriye e-posta gönder">
+            <Mail className="size-3.5" /> Mail
+          </Button>
+        </div>
+      ) : null,
+      meta: { disableFilter: true },
+    },
+  ], [can]);
 
   const table = useServerTable<Row>({
     api: adminApi,
@@ -136,6 +154,16 @@ export default function AdminCustomers() {
           </>
         }
       />
+
+      {mailRow && (
+        <CustomerMailDialog
+          open
+          onOpenChange={(o) => !o && setMailRow(null)}
+          target={{ kind: 'customer', id: mailRow.id }}
+          email={mailRow.email}
+          name={mailRow.full_name}
+        />
+      )}
     </div>
   );
 }
