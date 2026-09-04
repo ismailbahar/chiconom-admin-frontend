@@ -54,7 +54,7 @@ const GROUP_META: Record<string, { label: string; icon: React.ElementType; hint?
   order: { label: 'Sipariş & Kargo', icon: ShoppingCart, hint: 'Ücretsiz kargo eşiği ve iade süresi mağaza geneli için geçerlidir.' },
   payment: { label: 'Ödeme', icon: CreditCard, hint: 'Sanal POS seçimi ve taksit sınırı.' },
   seo: { label: 'SEO & Analitik', icon: Search, hint: 'Google Analytics / GTM kimlikleri vitrine otomatik gömülür.' },
-  invoice: { label: 'e-Fatura', icon: Receipt, hint: 'İşnet entegrasyonu; kapalıyken fatura kesilmez.' },
+  invoice: { label: 'e-Fatura', icon: Receipt, hint: 'BirFatura entegrasyonu; API bilgileri ve otomatik kesim Entegrasyonlar ekranındadır.' },
   notification: { label: 'Bildirim', icon: Bell, hint: 'E-posta ve SMS gönderimi kuyruk üzerinden çalışır.' },
 };
 
@@ -243,11 +243,11 @@ export default function AdminSettings() {
           <IntegrationCard
             icon={Receipt}
             title="e-Fatura"
-            value={integrations.einvoice.enabled ? integrations.einvoice.provider.toUpperCase() : 'Kapalı'}
-            ok={integrations.einvoice.enabled && integrations.einvoice.configured}
+            value={integrations.einvoice.configured ? `BirFatura · ${integrations.einvoice.enabled ? 'otomatik' : 'elle'}` : 'Kurulmadı'}
+            ok={integrations.einvoice.configured}
             notes={[
-              integrations.einvoice.configured ? 'Kimlik bilgileri tanımlı' : 'Kimlik bilgileri eksik',
-              integrations.einvoice.test_mode ? 'TEST ortamı' : 'CANLI ortam',
+              integrations.einvoice.configured ? 'API bilgileri tanımlı' : 'API bilgileri eksik (Entegrasyonlar)',
+              integrations.einvoice.enabled ? 'Teslimatta otomatik kesim açık' : "Sipariş detayından 'e-Fatura Kes'",
             ]}
           />
           <IntegrationCard

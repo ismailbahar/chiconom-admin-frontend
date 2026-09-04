@@ -16,6 +16,8 @@ interface Field {
   key: string;
   label: string;
   hint: string | null;
+  /** Seçenekli alan (açık/kapalı gibi) — liste kutusu olarak çizilir */
+  options: Array<{ value: string; label: string }> | null;
   secret: boolean;
   filled: boolean;
   value: string | null;
@@ -41,6 +43,8 @@ const TEST_ENDPOINT: Record<string, { url: string; body?: Record<string, unknown
   iyzico: { url: '/test/payment', body: { provider: 'iyzico' } },
   moka: { url: '/test/payment', body: { provider: 'moka' } },
   paytr: { url: '/test/payment', body: { provider: 'paytr' } },
+  birfatura: { url: '/test/einvoice' },
+  trendyol: { url: '/test/trendyol' },
 };
 
 const SOURCE_LABEL: Record<Field['source'], string> = {
@@ -113,7 +117,7 @@ export default function AdminIntegrations() {
     <div>
       <PageHeader
         title="Entegrasyonlar"
-        description="Sanal POS, kargo, SMS, e-fatura ve e-posta sunucusu bilgileri."
+        description="Sanal POS, kargo, SMS, BirFatura e-Fatura, Trendyol ve e-posta sunucusu bilgileri."
         icon={Plug}
       />
 
@@ -198,16 +202,27 @@ export default function AdminIntegrations() {
                       </div>
 
                       <div className="flex gap-1.5">
-                        <Input
-                          type={alan.secret ? 'password' : 'text'}
-                          autoComplete="new-password"
-                          value={taslak[alan.key] ?? (alan.secret ? '' : alan.value ?? '')}
-                          onChange={(e) => setDraft(grup.key, alan.key, e.target.value)}
-                          placeholder={alan.secret
-                            ? (alan.masked ?? 'Girilmemiş')
-                            : 'Girilmemiş'}
-                          className="font-mono text-xs"
-                        />
+                        {alan.options ? (
+                          <select
+                            value={taslak[alan.key] ?? String(alan.value ?? '')}
+                            onChange={(e) => setDraft(grup.key, alan.key, e.target.value)}
+                            className="h-9 w-full rounded-lg border border-input bg-background px-2 text-xs focus:outline-none focus:ring-2 focus:ring-ring"
+                          >
+                            {!alan.value && <option value="">Seçin…</option>}
+                            {alan.options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                          </select>
+                        ) : (
+                          <Input
+                            type={alan.secret ? 'password' : 'text'}
+                            autoComplete="new-password"
+                            value={taslak[alan.key] ?? (alan.secret ? '' : alan.value ?? '')}
+                            onChange={(e) => setDraft(grup.key, alan.key, e.target.value)}
+                            placeholder={alan.secret
+                              ? (alan.masked ?? 'Girilmemiş')
+                              : 'Girilmemiş'}
+                            className="font-mono text-xs"
+                          />
+                        )}
 
                         {/*
                           Silme ayrı bir işlemdir. "Boş bırak, silinsin"

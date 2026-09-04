@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { ColumnDef } from '@tanstack/react-table';
-import { Download, Loader2, Receipt, Send, Trash2 } from 'lucide-react';
+import { Download, ExternalLink, Loader2, Receipt, RefreshCw, Send, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import PageHeader from '@/components/panel/PageHeader';
 import ServerTable from '@/components/panel/ServerTable';
@@ -26,6 +26,11 @@ interface Row {
   status_label?: string;
   source: 'manual' | 'auto';
   has_file: boolean;
+  provider: string | null;
+  ettn: string | null;
+  viewer_url: string | null;
+  document_type: 'einvoice' | 'earchive' | null;
+  error_message: string | null;
   original_name: string | null;
   uploaded_by: string | null;
   sent_to_customer_at: string | null;
@@ -124,7 +129,20 @@ export default function AdminInvoices() {
     {
       accessorKey: 'source',
       header: 'Kaynak',
-      cell: ({ row }) => <StatusBadge status={row.original.source} />,
+      cell: ({ row }) => (
+        <div className="flex flex-col items-start gap-0.5">
+          <StatusBadge status={row.original.source} />
+          {row.original.source === 'auto' && (
+            <span className="text-[10px] text-muted-foreground">
+              BirFatura · {row.original.document_type === 'einvoice' ? 'e-Fatura' : 'e-Arşiv'}
+              {!row.original.has_file && ' · PDF bekleniyor'}
+            </span>
+          )}
+          {row.original.error_message && (
+            <span className="line-clamp-2 max-w-56 text-[10px] text-destructive" title={row.original.error_message}>{row.original.error_message}</span>
+          )}
+        </div>
+      ),
       meta: { exportHeader: 'Kaynak', filterVariant: 'select', filterOptions: statusOptions(['manual', 'auto']) },
     },
     {
@@ -164,6 +182,30 @@ export default function AdminInvoices() {
 
         return (
           <div className="flex justify-end gap-1">
+            {item.viewer_url && (
+              <Button variant="ghost" size="icon" title="Entegratörde görüntüle" asChild>
+                <a href={item.viewer_url} target="_blank" rel="noreferrer"><ExternalLink className="size-4" /></a>
+              </Button>
+            )}
+            {can('invoices.manage') && item.source === 'auto' && !item.has_file && (
+              <Button
+                variant="ghost" size="icon" title="PDF'i BirFatura'dan al ve müşteriye gönder" disabled={busy}
+                onClick={async () => {
+                  setBusyId(item.id);
+                  try {
+                    const { data } = await adminApi.post(`/invoices/${item.id}/refresh-pdf`);
+                    toast[data.ready ? 'success' : 'info'](data.message);
+                    table.refresh();
+                  } catch (error) {
+                    toast.error(errorMessage(error));
+                  } finally {
+                    setBusyId(null);
+                  }
+                }}
+              >
+                {busy ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
+              </Button>
+            )}
             {item.has_file && (
               <Button variant="ghost" size="icon" title="PDF'i indir" onClick={() => downloadInvoice(item)}>
                 <Download className="size-4" />

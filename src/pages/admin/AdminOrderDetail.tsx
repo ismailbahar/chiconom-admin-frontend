@@ -578,9 +578,34 @@ export default function AdminOrderDetail() {
             <div className="mb-2 flex items-center justify-between gap-2">
               <p className="flex items-center gap-2 text-sm font-bold"><Receipt className="size-4 text-brand" /> Fatura</p>
               {can('invoices.manage') && o.payment_status === 'paid' && (
-                <Button variant={data.invoice ? 'outline' : 'deal'} size="sm" onClick={() => setInvoiceOpen(true)}>
-                  <FileText className="size-3.5" /> {data.invoice ? 'Yeniden Yükle' : 'Fatura Yükle'}
-                </Button>
+                <div className="flex flex-wrap gap-1.5">
+                  {/* e-Fatura: BirFatura üzerinden anında kesim (elle yüklenmiş fatura yoksa) */}
+                  {(!data.invoice || (data.invoice.source === 'auto' && !data.invoice.has_file)) && (
+                    <Button
+                      variant="deal" size="sm"
+                      disabled={busy === 'einvoice'}
+                      onClick={() => run('einvoice', () => adminApi.post(`/orders/${orderNumber}/einvoice`))}
+                    >
+                      {busy === 'einvoice' ? <Loader2 className="size-3.5 animate-spin" /> : <Receipt className="size-3.5" />}
+                      {data.invoice ? 'Yeniden Kes' : 'e-Fatura Kes'}
+                    </Button>
+                  )}
+                  {data.invoice?.source === 'auto' && !data.invoice.has_file && (
+                    <Button
+                      variant="outline" size="sm"
+                      disabled={busy === 'einvoice-pdf'}
+                      onClick={() => run('einvoice-pdf', () => adminApi.post(`/invoices/${data.invoice!.id}/refresh-pdf`))}
+                    >
+                      {busy === 'einvoice-pdf' ? <Loader2 className="size-3.5 animate-spin" /> : <Download className="size-3.5" />}
+                      PDF'i Al
+                    </Button>
+                  )}
+                  {(!data.invoice || data.invoice.source === 'manual') && (
+                    <Button variant={data.invoice ? 'outline' : 'outline'} size="sm" onClick={() => setInvoiceOpen(true)}>
+                      <FileText className="size-3.5" /> {data.invoice ? 'Yeniden Yükle' : 'PDF Yükle'}
+                    </Button>
+                  )}
+                </div>
               )}
             </div>
 
@@ -597,6 +622,11 @@ export default function AdminOrderDetail() {
                     : 'Müşteriye henüz gönderilmedi'}
                 </span>
                 <span className="ml-auto flex gap-1">
+                  {data.invoice.viewer_url && (
+                    <Button variant="ghost" size="icon" title="Entegratörde görüntüle" asChild>
+                      <a href={data.invoice.viewer_url} target="_blank" rel="noreferrer"><ExternalLink className="size-4" /></a>
+                    </Button>
+                  )}
                   {data.invoice.has_file && (
                     <Button variant="ghost" size="icon" title="PDF indir" onClick={downloadInvoice}><Download className="size-4" /></Button>
                   )}
@@ -616,9 +646,9 @@ export default function AdminOrderDetail() {
               <p className="text-sm text-muted-foreground">
                 {o.payment_status === 'paid'
                   ? invoiceNeeded
-                    ? 'Sipariş kargoya verildi ama faturası yüklenmedi. Muhasebe programında kesip PDF olarak yükleyin.'
-                    : 'Fatura henüz yüklenmedi. Muhasebe programında kestikten sonra PDF olarak yükleyin; müşteriye e-posta ile gider.'
-                  : 'Ödeme alınmadan fatura yüklenemez.'}
+                    ? "Sipariş kargoya verildi ama faturası yok. 'e-Fatura Kes' ile BirFatura üzerinden kesin ya da PDF yükleyin."
+                    : "Fatura henüz kesilmedi. 'e-Fatura Kes' BirFatura üzerinden keser ve PDF'i müşteriye e-posta ile gönderir; isterseniz kendi PDF'inizi de yükleyebilirsiniz."
+                  : 'Ödeme alınmadan fatura kesilemez.'}
               </p>
             )}
           </div>

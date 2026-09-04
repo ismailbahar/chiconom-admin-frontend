@@ -4,7 +4,7 @@ import {
   BarChart3, Bell, Boxes, CheckCircle2, Clock, FileText, FolderTree, Gift, Grid3x3, HelpCircle,
   Image, Inbox, Kanban, LayoutDashboard, LayoutList, Loader2, Mail, Megaphone, MessageCircleQuestion,
   MessageSquare, Newspaper, Package, PackageCheck, PackageOpen, Plug, Receipt, RotateCcw,
-  ScrollText, Settings, ShieldCheck, ShoppingBag, Tag, Ticket, Truck, UserCog, Users, Wallet, XCircle, Zap,
+  ScrollText, Settings, ShieldCheck, ShoppingBag, Store, Tag, Ticket, Truck, UserCog, Users, Wallet, XCircle, Zap,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import PanelLayout, { type NavGroup, type NavItem } from '@/components/panel/PanelLayout';
@@ -26,6 +26,8 @@ const AdminCustomers = lazy(() => import('./AdminCustomers'));
 const AdminCancellations = lazy(() => import('./AdminCancellations'));
 const AdminReturns = lazy(() => import('./AdminReturns'));
 const AdminInvoices = lazy(() => import('./AdminInvoices'));
+const AdminEInvoice = lazy(() => import('./AdminEInvoice'));
+const AdminTrendyol = lazy(() => import('./AdminTrendyol'));
 const AdminUsers = lazy(() => import('./AdminUsers'));
 const AdminOrderDetail = lazy(() => import('./AdminOrderDetail'));
 const AdminCategories = lazy(() => import('./AdminCategories'));
@@ -68,6 +70,14 @@ const GROUPS: NavGroup[] = [
       { href: '/iptaller', label: 'İptal Talepleri', icon: RotateCcw, perm: 'returns.manage', badgeKey: 'cancellations' },
       { href: '/iadeler', label: 'İade Talepleri', icon: RotateCcw, perm: 'returns.manage', badgeKey: 'returns_open' },
       { href: '/faturalar', label: 'Faturalar', icon: Receipt, perm: 'invoices.view', badgeKey: 'invoices_missing' },
+      { href: '/e-fatura', label: 'e-Fatura (BirFatura)', icon: Receipt, perm: 'invoices.manage' },
+    ],
+  },
+  {
+    label: 'Trendyol',
+    icon: Store,
+    items: [
+      { href: '/trendyol', label: 'Trendyol İlanları & Fiyatlar', icon: Store, perm: 'trendyol.manage' },
     ],
   },
   {
@@ -123,7 +133,7 @@ const GROUPS: NavGroup[] = [
       { href: '/kaynak/sms-templates', label: 'SMS Şablonları', icon: Bell, perm: 'templates.manage' },
       { href: '/kaynak/shipping-companies', label: 'Kargo Firmaları', icon: Truck, perm: 'settings.manage' },
       { href: '/sozlesmeler', label: 'Sözleşmeler', icon: ScrollText, perm: 'settings.manage' },
-      { href: '/ayarlar/entegrasyonlar', label: 'Entegrasyonlar (PayTR, Netgsm, SMTP)', icon: Plug, perm: 'settings.manage' },
+      { href: '/ayarlar/entegrasyonlar', label: 'Entegrasyonlar (PayTR, BirFatura, Trendyol…)', icon: Plug, perm: 'settings.manage' },
       { href: '/ayarlar', label: 'Ayarlar', icon: Wallet, perm: 'settings.manage' },
     ],
   },
@@ -187,6 +197,8 @@ export default function AdminRoutes() {
         <Route path="iptaller" element={S(<AdminCancellations />)} />
         <Route path="iadeler" element={S(<AdminReturns />)} />
         <Route path="faturalar" element={S(<AdminInvoices />)} />
+        <Route path="e-fatura" element={S(<AdminEInvoice />)} />
+        <Route path="trendyol" element={S(<AdminTrendyol />)} />
 
         <Route path="musteriler" element={S(<AdminCustomers />)} />
         <Route path="yorumlar" element={S(<AdminReviews />)} />
