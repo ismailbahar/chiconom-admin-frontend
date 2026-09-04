@@ -500,7 +500,8 @@ export default function AdminOrderDetail() {
                   <div className="shrink-0 text-right">
                     <p className="text-sm font-bold tabular-nums">{formatPrice(item.line_total)}</p>
                     <p className="text-[11px] text-muted-foreground tabular-nums">{item.quantity} × {formatPrice(item.unit_price)}</p>
-                    {item.list_price && Number(item.list_price) > Number(item.unit_price) && (
+                    {/* list_price 0 gelince "&&" ekrana "0" basıyordu; sayısal karşılaştırma şart */}
+                    {Number(item.list_price ?? 0) > Number(item.unit_price) && (
                       <p className="text-[11px] text-muted-foreground line-through tabular-nums">{formatPrice(item.list_price)}</p>
                     )}
                   </div>
